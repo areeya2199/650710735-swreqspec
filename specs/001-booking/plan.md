@@ -1,77 +1,134 @@
 # Plan: จองคิวตรวจสุขภาพ (Booking)
+อ้างอิง: spec.md SPEC-BKG-001 Draft v2 | Updated: 2569-09-22 | สร้างด้วย /plan แล้วทีมตรวจแล้ว (plan v1)
 
 ## 1. สรุปแนวทาง
-ฟีเจอร์นี้สร้างเพื่อให้ผู้รับบริการที่ยืนยันตัวตนแล้วเลือกแพ็กเกจ วัน และช่วงเวลาตรวจสุขภาพ แล้วได้รับหมายเลขคิวพร้อมยืนยันการจองได้ภายในกระบวนการที่เร็วและปลอดภัย ผู้ใช้หลักคือผู้รับบริการและทีมเจ้าหน้าที่ตรวจสุขภาพที่ต้องเห็นข้อมูลคิวและความพร้อมของช่วงเวลา ระบบจะใช้การคำนวณช่วงเวลาว่างจากฐานข้อมูลที่มีอยู่ การป้องกันการจองซ้ำ และคิวส่งข้อความแบบ asynchronous เพื่อให้การจองไม่หยุดรอส่ง SMS/LINE และแนวทางการออกแบบจะยึดตาม FR, NFR และ Constraints ใน spec อย่างเคร่งครัด
+- ผู้รับบริการที่ยืนยันตัวตนแล้ว ค้นช่วงเวลาว่าง เลือก แล้วยืนยันการจอง ได้หมายเลขคิวกลับทันที
+- หลังบ้านเป็น API (Python FastAPI) เก็บข้อมูลใน PostgreSQL ตาม CON-TECH-01 ผ่าน SQLAlchemy
+- การส่งข้อความยืนยันไม่รอผล (IF-NOT-01): API แค่วางงานลงคิว แล้วตัวส่งแยกทำงานเบื้องหลัง
+- ทุกการเข้าถึงข้อมูลการจองถูกบันทึก audit log (DOM-PDPA-01) และเก็บเฉพาะ HN ไม่เก็บเลขบัตรประชาชน (IF-HIS-01)
+- ส่วนที่ติด Q-02 (รูปแบบหมายเลขคิว) ยังไม่สร้าง ใช้ช่องเก็บเลขคิวไว้ก่อนแต่ยังไม่กำหนดวิธีออกเลข
 
 ## 2. เทคโนโลยีที่ใช้
-
 | สิ่งที่เลือก | มาจาก | หมายเหตุ |
 |---|---|---|
-| React + Vite สำหรับหน้าเว็บไซต์/แอปผู้ใช้ | ทีมเลือกเอง ไม่ได้มาจาก spec | ใช้สำหรับแสดงวันและช่วงเวลา ว่าง พร้อมการยืนยันการจองและแสดงหมายเลขคิว |
-| Python FastAPI สำหรับ API backend | ทีมเลือกเอง ไม่ได้มาจาก spec | ใช้สำหรับการตรวจสิทธิ์ การคำนวณช่วงเวลาและการบันทึกการจอง |
-| MySQL | CON-TECH-01 | ใช้เก็บข้อมูล booking, availability, queue, audit log และการส่งข้อความซ้ำ |
-| Queue สำหรับการส่งข้อความยืนยันแบบ asynchronous | IF-NOT-01 | ระบบบันทึกการจองก่อนและจัดเก็บงานส่ง SMS/LINE ไว้ในคิวเพื่อไม่ให้รอผลส่งข้อความ |
-| TLS 1.2+ สำหรับข้อมูลรับส่ง | NFR-SEC-01 | ใช้ในทุกการสื่อสารระหว่าง frontend, API และระบบภายนอก |
+| PostgreSQL 16 | CON-TECH-01 | บังคับโดยฝ่าย IT โรงพยาบาล ใช้ในระบบจริง |
+| Python 3.12 + FastAPI | ทีมเลือกเอง ไม่ได้มาจาก spec | ค่าเริ่มต้นของรายวิชา |
+| SQLAlchemy 2 | ทีมเลือกเอง ไม่ได้มาจาก spec | ต่อฐานข้อมูลผ่านตัวแปร `DATABASE_URL` สลับฐานข้อมูลได้โดยไม่แก้โค้ด |
+| pytest | ทีมเลือกเอง ไม่ได้มาจาก spec | ตอน test ใช้ SQLite ในหน่วยความจำ (`sqlite:///:memory:`) แทน PostgreSQL เพราะ Codespace ไม่มีเครื่องฐานข้อมูลรันอยู่ ไม่ต้องติดตั้งอะไรเพิ่ม |
+| React (Vite) + Tailwind CSS | ทีมเลือกเอง ไม่ได้มาจาก spec | ค่าเริ่มต้นของรายวิชา โครงเริ่มต้นอยู่ใน `frontend/` แล้ว |
+| Vitest + React Testing Library | ทีมเลือกเอง ไม่ได้มาจาก spec | test หน้าจอ ใช้ API จำลอง ไม่ต้องรันหลังบ้านจริง |
+| Redis (คิวส่งข้อความ) | ทีมเลือกเอง ไม่ได้มาจาก spec | รองรับ IF-NOT-01 แบบ async ตอน test ใช้คิวจำลองในหน่วยความจำ ไม่ต้องมี Redis จริง |
+
+library ทั้งหมดอยู่ใน `backend/requirements.txt` (Codespace ติดตั้งให้ตอนสร้างเครื่อง)
+รัน test หลังบ้านด้วยคำสั่ง `cd backend && pytest` (ตั้งค่าไว้แล้วใน `backend/pytest.ini`)
+เปิดหลังบ้านให้หน้าจอเรียกได้ด้วยคำสั่ง `cd backend && uvicorn app.main:app --reload --port 8000` (หน้าจอเรียกผ่าน `/api` ซึ่ง Vite ส่งต่อไปให้)
+รัน test หน้าจอด้วยคำสั่ง `cd frontend && npm test` และเปิดดูหน้าจอด้วย `cd frontend && npm run dev` (Codespace ติดตั้ง library ของหน้าจอให้ตอนสร้างเครื่อง)
+
+### โครงไฟล์
+```
+backend/
+  requirements.txt
+  pytest.ini                   ตั้งค่า pytest ให้หา app/ เจอ
+  app/
+    main.py                    สร้าง FastAPI app และรวม router
+    config.py                  อ่าน DATABASE_URL
+    db/
+      models.py                ตาราง slots, bookings, audit_logs (SQLAlchemy)
+      session.py               สร้าง engine และ session
+      migrations/
+        001_init.py            ฟังก์ชัน upgrade(engine) สร้างทุกตาราง
+    auth/
+      idp.py                   ตรวจผลยืนยันตัวตนจากระบบยืนยันตัวตน (IF-IDP-01)
+    his/
+      client.py                ค้น HN จาก HIS ด้วยเลขบัตร (IF-HIS-01)
+    audit/
+      middleware.py            บันทึก audit log ทุก request ที่แตะข้อมูลการจอง (DOM-PDPA-01)
+    slots/
+      router.py                GET /slots
+      service.py               คำนวณช่วงว่าง และหาช่วงใกล้เคียง
+    booking/
+      router.py                POST /bookings, GET /bookings/{id}
+      service.py               กันจองซ้ำ ตัดที่นั่ง บันทึกการจอง
+    notify/
+      queue.py                 วางงานส่งข้อความลงคิว และส่งซ้ำตาม ASM-03
+  tests/
+    conftest.py                เตรียมฐานข้อมูล SQLite ในหน่วยความจำให้ทุก test
+    test_*.py                  1 ไฟล์ต่อ 1 task หรือ 1 AC
+frontend/                      React (Vite) + Tailwind CSS มีโครงเริ่มต้นให้แล้ว
+  package.json                 คำสั่ง npm run dev, npm test
+  vite.config.js               ตั้งค่า Vite, Tailwind และ Vitest
+  src/
+    App.jsx                    หน้าแรก ใส่หน้าจอของแต่ละ task เข้ามาที่นี่
+    index.css                  เปิดใช้ Tailwind
+    api/client.js              เรียก API หลังบ้านผ่าน /api (Vite ส่งต่อไป port 8000) ตอน test ส่ง client จำลองเข้าหน้าจอแทน
+    pages/SlotPicker.jsx       หน้าเลือกแพ็กเกจและช่วงเวลา
+    pages/ConfirmBooking.jsx   หน้ายืนยัน และแจ้ง "ช่วงเวลาเต็ม" พร้อม 3 ตัวเลือก
+    pages/BookingResult.jsx    หน้าแสดงผลการจองและหมายเลขคิว
+    __tests__/                 test หน้าจอ ตั้งชื่อไฟล์ตาม AC เช่น AC-BKG-03.test.jsx
+```
 
 ## 3. โมเดลข้อมูล
-
-| Entity | ฟิลด์หลัก | รองรับ FR / Constraint |
+| ตาราง | ฟิลด์หลัก | รองรับ |
 |---|---|---|
-| Patient | hn, full_name, verified_status, last_updated_at | รองรับ IF-IDP-01, IF-HIS-01; ไม่เก็บเลขบัตรประชาชนในตารางการจอง |
-| Booking | booking_id, hn, package_id, booking_date, slot_id, queue_no, status, created_at, notification_status | รองรับ FR-BKG-02, FR-BKG-04, FR-BKG-05, AC-BKG-01, AC-BKG-02, AC-BKG-04 |
-| TimeSlot | slot_id, date, start_time, end_time, package_id, capacity, remaining_seats, status | รองรับ FR-BKG-01, FR-BKG-03, FR-BKG-06, AC-BKG-03, AC-BKG-05 |
-| QueuePolicy | policy_id, package_id, date, slot_id, quota, max_per_day | รองรับ Goal, ASM-01, ASM-04, FR-BKG-01 |
-| NotificationJob | job_id, booking_id, channel, payload, status, retry_count, next_retry_at | รองรับ IF-NOT-01, FR-BKG-05, NFR-REL-02, AC-BKG-04 |
-| AuditLog | audit_id, actor_user_id, hn, accessed_at, resource_type, action | รองรับ DOM-PDPA-01, AC-BKG-06 |
+| slots | id, slot_date, start_time, package_code, capacity, remaining | FR-BKG-01, FR-BKG-06, ASM-01 |
+| bookings | id, hn, slot_id, booking_date, queue_no (ว่างได้ รอ Q-02), status, created_at | FR-BKG-02, FR-BKG-04, IF-HIS-01 |
+| audit_logs | id, actor_id, action, hn, accessed_at | DOM-PDPA-01 |
 
-> ข้อควรระวัง: ตารางการจองและตารางข้อมูลหลักจะไม่เก็บเลขบัตรประชาชน ตาม IF-HIS-01 และจะใช้ HN เป็นรหัสอ้างอิงภายในระบบเท่านั้น
+- ตาราง bookings เก็บเฉพาะ `hn` **ไม่มีคอลัมน์เลขบัตรประชาชน (national_id)** ตาม IF-HIS-01
+- `queue_no` มีคอลัมน์ไว้ แต่ยังไม่กำหนดรูปแบบและวิธีออกเลข จนกว่า Q-02 จะได้คำตอบ
+- รายการค้างส่งข้อความ (ASM-03) เก็บในคิว Redis ไม่ใช่ตารางใน PostgreSQL
 
 ## 4. API / หน้าจอ
-
-| Method / Path | Input หลัก | Output หลัก | รองรับ FR |
-|---|---|---|---|
-| GET /api/booking/slots | packageId, fromDate, toDate | รายการวันและช่วงเวลาว่างพร้อม remainingSeats | FR-BKG-01, FR-BKG-06 |
-| POST /api/booking/check-duplicate | hn, bookingDate | status=allowed/blocked, existingQueueNo | FR-BKG-02 |
-| POST /api/booking/alternatives | packageId, selectedDate, selectedSlotId | 3 ตัวเลือกช่วงเวลาใกล้เคียง | FR-BKG-03 |
-| POST /api/booking/reserve | hn, packageId, bookingDate, slotId | bookingId, queueNo, reserveStatus | FR-BKG-04 |
-| GET /api/booking/{bookingId} | bookingId | queueNo, status, notificationStatus | FR-BKG-05 |
-| POST /api/booking/notification/retry | bookingId | retryAccepted, nextRetryAt | FR-BKG-05, NFR-REL-02 |
-| GET /booking | - | หน้าเลือกแพ็กเกจ วัน และช่วงเวลา | FR-BKG-01, FR-BKG-02, FR-BKG-03, FR-BKG-06 |
-| GET /booking/confirm | bookingId | หน้าแสดงหมายเลขคิวและสรุปการจอง | FR-BKG-04, FR-BKG-05 |
+| รายการ | input / output หลัก | รองรับ |
+|---|---|---|
+| GET /slots | in: date_from, package_code / out: รายการช่วงเวลา + ที่นั่งคงเหลือ | FR-BKG-01, FR-BKG-06 |
+| POST /bookings | in: slot_id / out: booking id, queue_no หรือ 409 พร้อมช่วงใกล้เคียง 3 ช่วง | FR-BKG-02, FR-BKG-03, FR-BKG-04 |
+| GET /bookings/{id} | out: รายละเอียดการจอง + queue_no | FR-BKG-05 |
+| GET /patients/lookup | in: เลขบัตร (ส่งต่อไป HIS ไม่เก็บ) / out: hn | IF-HIS-01 |
+| หน้าเลือกแพ็กเกจและเวลา (SlotPicker) | เรียก GET /slots เปลี่ยนแพ็กเกจแล้วโหลดช่วงเวลาใหม่ | FR-BKG-01, FR-BKG-06 |
+| หน้ายืนยัน (ConfirmBooking) | เรียก POST /bookings ถ้าได้ 409 แสดง "ช่วงเวลาเต็ม" และ 3 ตัวเลือก | FR-BKG-03, FR-BKG-04 |
+| หน้าแสดงผลการจอง (BookingResult) | แสดงหมายเลขคิว แม้ส่งข้อความไม่สำเร็จ | FR-BKG-04, FR-BKG-05 |
 
 ## 5. ตารางตรวจ Constraints
-
 | Constraint ID | ถูกนำไปใช้ที่ไหนใน plan | สถานะ |
 |---|---|---|
-| CON-TECH-01 | MySQL ถูกเลือกเป็น datastore หลักสำหรับ Booking, TimeSlot, QueuePolicy และ AuditLog | ใช้แล้ว |
-| DOM-PDPA-01 | เพิ่ม AuditLog entity และการบันทึกผู้เข้าถึง เวลา และ HN ทุกครั้งที่เข้าใช้ข้อมูล | ใช้แล้ว |
-| IF-IDP-01 | กระบวนการ reserve/check-duplicate จะต้องตรวจว่าผู้รับบริการยืนยันตัวตนแล้วก่อนเรียก API | ใช้แล้ว |
-| IF-HIS-01 | Patient entity ใช้ HN เป็น key ภายในระบบ และไม่เก็บเลขบัตรประชาชนใน Booking หรือ TimeSlot | ใช้แล้ว |
-| IF-NOT-01 | NotificationJob + async queue ทำให้การจองไม่รอผลส่งข้อความ และยังเรียก retry ได้ตามเงื่อนไข | ใช้แล้ว |
+| CON-TECH-01 | ข้อ 2 และข้อ 3 (ตารางทั้งหมดอยู่ใน PostgreSQL ในระบบจริง) | ใช้แล้ว |
+| DOM-PDPA-01 | ตาราง audit_logs และ audit/middleware.py | ใช้แล้ว |
+| IF-IDP-01 | auth/idp.py ทุก endpoint ตรวจผลยืนยันตัวตนก่อน | ใช้แล้ว |
+| IF-HIS-01 | GET /patients/lookup และ bookings เก็บเฉพาะ hn | ใช้แล้ว |
+| IF-NOT-01 | notify/queue.py POST /bookings ไม่รอผลการส่งข้อความ | ใช้แล้ว ตาม ASM-03 |
 
 ## 6. แผนทดสอบจาก Acceptance Criteria
-
 | AC ID | ชื่อ test | ทดสอบอย่างไร |
 |---|---|---|
-| AC-BKG-01 | test_AC_BKG_01_successful_booking_reduces_remaining_seat | ตั้งค่า slot มีที่นั่ง 1 ที่, ทำการ reserve สำเร็จ, ตรวจว่าบันทึก booking, แสดง queueNo และ remainingSeats กลายเป็น 0 |
-| AC-BKG-02 | test_AC_BKG_02_block_duplicate_active_booking_same_day | ตั้งคิววันเดียวกันที่ยังไม่ใช้, พยายามจองใหม่, ตรวจว่า API คืนค่าปฏิเสธและแสดง queueNo เดิม |
-| AC-BKG-03 | test_AC_BKG_03_show_three_alternative_slots_when_full | จำลอง slot ว่างเหลือ 1 ที่และมีคนยืนยันก่อน, ตรวจว่าแสดงข้อความ “ช่วงเวลาเต็ม” และมี 3 ตัวเลือกภายในวันเดียวกันและวันถัดไป |
-| AC-BKG-04 | test_AC_BKG_04_notification_failure_keeps_booking_and_retries | จำลอง notification failure, ตรวจว่าการจองยังถูกบันทึกพร้อม queue retry และแสดงหมายเลขคิวบนหน้าจอ |
-| AC-BKG-05 | test_AC_BKG_05_peak_load_slot_lookup_p95_under_2_seconds | จำลองผู้ใช้พร้อมกัน 200 คน, วัด p95 ของการเรียก slots API และตรวจว่าต่ำกว่า 2 วินาที |
-| AC-BKG-06 | test_AC_BKG_06_audit_log_written_on_access | ทำการเข้าดูข้อมูล booking ของผู้รับบริการ, ตรวจว่ามี AuditLog ที่มี actor, accessed_at และ hn | 
+| AC-BKG-01 | test_AC_BKG_01 | สร้างช่วง 09.00 ที่เหลือ 1 ที่ จองผ่าน API แล้วตรวจว่าบันทึกสำเร็จ และ remaining เป็น 0 |
+| AC-BKG-02 | test_AC_BKG_02 | สร้างการจองวันเดียวกันไว้ 1 รายการ จองซ้ำ แล้วตรวจว่าถูกปฏิเสธและได้ booking เดิมกลับ |
+| AC-BKG-03 | test_AC_BKG_03 | ทำให้ช่วง 09.00 เต็มก่อนยืนยัน แล้วตรวจว่าได้ 409 พร้อม 3 ช่วงที่ใกล้ที่สุดในวันเดียวกันและวันถัดไป และไม่มีการจองซ้อน |
+| AC-BKG-04 | test_AC_BKG_04 | ใช้คิวจำลองที่ส่งไม่สำเร็จ ตรวจว่าการจองยังถูกบันทึก และมีงานส่งซ้ำกำหนดภายใน 5 นาที |
+| AC-BKG-05 | test_AC_BKG_05 | ยิง GET /slots พร้อมกัน 200 ครั้งแบบย่อส่วนใน Codespace แล้ววัด p95 (ผลจริงต้องวัดบนเครื่องทดสอบ) |
+| AC-BKG-06 | test_AC_BKG_06 | เปิดดูการจอง 1 ครั้ง แล้วตรวจว่ามี audit log ที่มี actor_id, accessed_at และ hn |
+| AC-BKG-03 (หน้าจอ) | AC-BKG-03.test.jsx | ให้ API จำลองตอบ 409 พร้อม 3 ช่วง แล้วตรวจว่าหน้าจอแสดง "ช่วงเวลาเต็ม" และปุ่ม 3 ตัวเลือก |
+
+หลักแยกง่าย ๆ: AC ที่ Then บอกว่า "บันทึก" ตรวจที่หลังบ้าน AC ที่ Then บอกว่า "แสดง" หรือ "แจ้ง" ต้องมี test หน้าจอด้วย
+FR-BKG-06 ยังไม่มี AC ใน spec จึงยังไม่มี test ที่ตรวจการเปลี่ยนแพ็กเกจ (ควรเสนอทีมเพิ่ม AC)
 
 ## 7. ลำดับงาน
+หลังบ้าน
+1. สร้างตารางและ migration (CON-TECH-01, DOM-PDPA-01, IF-HIS-01)
+2. GET /slots และการคำนวณช่วงว่างตามแพ็กเกจ (FR-BKG-01, FR-BKG-06, AC-BKG-05)
+3. POST /bookings พื้นฐาน ตัดที่นั่งและบันทึก (FR-BKG-04, AC-BKG-01)
+4. กันจองซ้ำวันเดียวกัน (FR-BKG-02, AC-BKG-02)
+5. เสนอช่วงใกล้เคียงเมื่อเต็ม (FR-BKG-03, AC-BKG-03)
+6. คิวส่งข้อความและการส่งซ้ำ (FR-BKG-05, IF-NOT-01, AC-BKG-04)
+7. audit log middleware (DOM-PDPA-01, AC-BKG-06)
+8. ค้น HN จาก HIS (IF-HIS-01)
+9. ออกหมายเลขคิวและแสดงบนหน้าจอ (FR-BKG-04) รอ Q-02
 
-1. กำหนดโครงสร้างข้อมูล booking, slot และ audit log ตาม Entity และ Constraint ที่ระบุ (FR-BKG-01, DOM-PDPA-01, IF-HIS-01)
-2. สร้าง API ดึงช่วงเวลาว่างพร้อม remainingSeats และ logic เลือก slot ตามแพ็กเกจ (FR-BKG-01, FR-BKG-06)
-3. สร้างตรวจสอบคิวซ้ำในวันเดียวกันก่อนบันทึกการจอง (FR-BKG-02, AC-BKG-02)
-4. สร้าง flow เมื่อ slot เต็ม: แสดงข้อความ เต็ม และแนะนำ 3 ตัวเลือกภายในวันเดียวกันและวันถัดไป (FR-BKG-03, AC-BKG-03)
-5. สร้าง reserve flow บันทึกการจอง, ออก queueNo และลด remainingSeats (FR-BKG-04, AC-BKG-01)
-6. เพิ่ม queue สำหรับส่งข้อความยืนยันแบบ asynchronous และ retry ภายใน 5 นาที (FR-BKG-05, NFR-REL-02, AC-BKG-04)
-7. สร้างหน้าแสดงผลการจองสำเร็จ แสดงหมายเลขคิว และสถานะการส่งข้อความ (FR-BKG-04, FR-BKG-05)
-8. ทดสอบประสิทธิภาพ p95 และ audit log ตาม AC-BKG-05, AC-BKG-06
+หน้าจอ (ใช้ API จำลองตามสัญญาในข้อ 4 จึงเริ่มพร้อมหลังบ้านได้)
+10. หน้าเลือกแพ็กเกจและช่วงเวลา (FR-BKG-01, FR-BKG-06) เริ่มได้เลย
+11. หน้ายืนยัน และแจ้ง "ช่วงเวลาเต็ม" พร้อม 3 ตัวเลือก (FR-BKG-03, AC-BKG-03) ทำหลังข้อ 10
+12. ต่อหน้าจอกับ API จริง (FR-BKG-01, FR-BKG-03) ทำหลังข้อ 2, ข้อ 5 และข้อ 11
 
 ## 8. สิ่งที่ยังไม่ทำ
-
-- Q-01 หมายเลขคิวรีเซ็ตรายวัน หรือนับต่อเนื่อง? -> ถามเจ้าหน้าที่เวชระเบียน
-  ส่วนที่เกี่ยวข้องกับข้อนี้จะยังไม่สร้างจนกว่าจะได้คำตอบ
+- Q-02 หมายเลขคิวรีเซ็ตรายวัน หรือนับต่อเนื่อง และมีรูปแบบอย่างไร -> ถามเจ้าหน้าที่เวชระเบียน
+  ส่วนที่เกี่ยวข้องกับข้อนี้ (วิธีออกเลขคิว และการแสดงเลขคิว) จะยังไม่สร้างจนกว่าจะได้คำตอบ
