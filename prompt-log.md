@@ -75,3 +75,21 @@
 - ผลทดสอบ: `cd backend && pytest -v` ผ่าน 7 tests (มี deprecation warning จาก Starlette/httpx)
 - ตรวจกรณี `remaining=0` โดยตรง: service ปฏิเสธการจองและคงค่า remaining เป็น 0
 - หมายเหตุ: TC-BKG-01-2 ในตารางปัจจุบันทดสอบที่นั่ง 1 ที่ก่อนจองแล้วลดเป็น 0; ไม่ได้แก้ test ตามคำสั่ง
+
+---
+
+## 2569-10-07 08:45 คำสั่ง: /verify specs/001-booking/
+
+- ผล test: backend `pytest -v` ผ่าน 7 tests; frontend `npm test` ผ่าน 1 test (smoke test โครงหน้าจอ); รวม 8 ผ่าน 0 ไม่ผ่าน
+- RTM: เพิ่ม specs/001-booking/rtm.md ครบ 15 IDs (FR 6, NFR 4, Constraint 5)
+- จำนวนสถานะ: ครบ 0, ยังไม่ถึง 7, รอ Q 0, ช่องโหว่ 8
+- ข้อค้นพบใหม่: F-01 ถึง F-10 (national_id ใน request/log และ HIS ที่ยังไม่มี; mock IDP; endpoint ยกเลิกอยู่นอก scope; เดารูปแบบคิว Q-02; 14 วันแทน 30 วัน; FR-BKG-01/06 ไม่มี AC ที่ตรวจ behavior; performance test ไม่จำลอง concurrency; TLS และ usability ยังไม่มี task/test)
+- ขอบเขต: อ่าน source/test ทั้งหมดที่มีใน backend/app, frontend/src, backend/tests และ frontend/src/__tests__; ไม่แก้ code, tests, spec, plan หรือ tasks
+
+---
+
+## 2569-10-07 08:50 คำสั่ง: ปฏิเสธการจองเมื่อไม่มีที่นั่ง
+
+- สิ่งที่ตรวจ: `backend/app/booking/service.py:create_booking` มีเงื่อนไข `slot.remaining <= 0` และโยน `SlotFullError` แล้ว จึงไม่ต้องแก้ service ซ้ำ
+- test: ไม่แก้ test
+- ผลทดสอบ: `cd backend && pytest -v` ผ่าน 7 tests (มี deprecation warning จาก Starlette/httpx)
