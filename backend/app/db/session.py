@@ -1,19 +1,17 @@
-import os
-from collections.abc import Generator
-
+# สร้าง engine และ session ของฐานข้อมูล (CON-TECH-01)
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
+from app.config import DATABASE_URL
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg://localhost/booking")
 engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+SessionLocal = sessionmaker(bind=engine, autoflush=False)
 
 
-def get_db() -> Generator[Session, None, None]:
-    """จัดหา database session สำหรับการเข้าถึงข้อมูลการจอง"""
-    session = SessionLocal()
+def get_db():
+    """ส่ง session ให้ API แต่ละตัว แล้วปิดเมื่อจบ"""
+    db = SessionLocal()
     try:
-        yield session
+        yield db
     finally:
-        session.close()
+        db.close()

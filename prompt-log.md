@@ -1,67 +1,46 @@
 # Prompt log
 
-บันทึกทุกครั้งที่ใช้ AI กับ repo นี้ เขียนต่อท้ายเรื่อย ๆ ไม่ต้องลบของเก่า
+บันทึกทุกครั้งที่ใช้ AI กับ repo นี้ เขียนต่อท้ายเรื่อย ๆ ไม่ลบของเก่า
 
 ---
 
-## 2569-09-16 10:00 คำสั่ง: /clarify
+## 2569-09-23 13.40 คำสั่ง: /tasks specs/001-booking/spec.md
 
-- เครื่องมือ: Copilot ใน Codespaces
-- ไฟล์: specs/001-booking/spec.md (v1)
+- เครื่องมือ: Copilot ใน Codespaces (Agent, Auto)
+- ผลลัพธ์: specs/001-booking/tasks.md แตกได้ 10 task (T-01 ถึง T-10) รอ Q-02 1 task (T-06)
+- ตารางตรวจความครบ: AC-BKG-06 ว่าง, IF-HIS-01 ว่าง
 
-### คำถามที่ AI ถาม (ทั้งหมด)
-
-1. "ช่วงเวลาใกล้เคียง" นับเฉพาะวันเดียวกัน หรือรวมวันถัดไปด้วย?
-2. หมายเลขคิวรีเซ็ตรายวัน หรือนับต่อเนื่อง?
-3. โควตาและการกระจายผู้รับบริการตามช่วงเวลา มาจากข้อกำหนดใด และผู้มีสิทธิ์กำหนดค่าอะไร?
-
-### คำตอบของทีมและเหตุผล
-
-1. รวมวันถัดไปด้วย — หลังจากถามพยาบาลคัดกรองแล้ว ได้คำตอบว่าควรพิจารณาช่วงเวลาในวันเดียวกันและวันถัดไป
-2. ไม่รู้ ต้องถามเจ้าหน้าที่เวชระเบียน — ขณะนี้ยังไม่มีคำตัดสินชัดเจนว่าควรรีเซ็ตรายวันหรือคำนวณต่อเนื่อง
-3. ทีมตัดสินใจเองว่าโควตาและการกระจายผู้รับบริการตามช่วงเวลาเป็นข้อมูลที่ UC-09 จัดการไว้แล้ว ฟีเจอร์นี้ใช้ข้อมูลโควตาที่มีอยู่เพื่อคำนวณช่วงเวลาว่างและการจอง
-
-### สิ่งที่แก้ใน spec.md (v1 เป็น v2)
-
-- เปลี่ยน Status จาก Draft v1 เป็น Draft v2
-- อัปเดตวันที่จาก 2569-09-09 เป็น 2569-09-16
-- ปรับ FR-BKG-03 ให้ชัดว่าเสนอ 3 ตัวเลือกภายในวันเดียวกันและวันถัดไป
-- ปรับ AC-BKG-03 ให้สอดคล้องกับข้อสรุปใหม่
-- เพิ่ม ASM-03 สำหรับข้อสรุปเรื่องช่วงเวลาใกล้เคียงรวมวันถัดไป
-- เพิ่ม ASM-04 สำหรับการตัดสินใจว่าควรใช้ข้อมูลโควตาจาก UC-09
-- ย้าย Q-01 ให้เหลือเฉพาะคำถามเรื่องหมายเลขคิวที่ยังต้องถามเจ้าหน้าที่เวชระเบียน
+### แก้รอบที่ 1
+- ทีมสั่ง: เพิ่ม task สำหรับ AC-BKG-06 และ IF-HIS-01 แล้วอัปเดตตารางท้ายไฟล์
+- AI เพิ่ม T-08 (audit log) และ T-09 (ค้น HN จาก HIS) เลื่อน task หน้าจอเป็น T-10 ถึง T-12
+- ตารางท้ายไฟล์ไม่มี "ว่าง" แล้ว
 
 ---
 
-## 2569-09-16 10:15 คำสั่ง: /plan
+## 2569-09-23 14.20 คำสั่ง: /implement T-01 specs/001-booking/tasks.md
 
-- เครื่องมือ: Copilot ใน Codespaces
-- ผลลัพธ์: specs/001-booking/plan.md
-- Constraint ที่ AI ยังไม่ได้ใช้: ไม่มี; ทุก Constraint ใน spec ถูกนำไปใช้ใน plan เรียบร้อยแล้ว
-- สิ่งที่ AI บอกว่าอยากเดาแต่ไม่ได้เดา: ไม่มีในแผนเนื่องจากได้ตัดสินใจตรงตาม spec และ Assumption ที่ทีมให้ไว้แล้ว; เฉพาะ Open Question ที่ยังค้างคือเรื่องหมายเลขคิวรีเซ็ตรายวันหรือคำนวณต่อเนื่อง ต้องถามเจ้าหน้าที่เวชระเบียนก่อนเริ่มพัฒนา
-
----
-
-## 2569-09-23 คำสั่ง: /tasks specs/001-booking/spec.md
-
-- เครื่องมือ: Copilot ใน Codespaces
-- ผลลัพธ์: specs/001-booking/tasks.md
-- สรุป: แตก plan.md เป็น 16 task ตามลำดับ dependency ครอบคลุมการตรวจ AC-BKG-01 ถึง AC-BKG-06 และ Constraint ทั้งหมดใน spec
-- งานที่รอ Open Question: 5 task รอ Q-02 เรื่องรูปแบบและวิธีออกหมายเลขคิว
-- สิ่งที่ยังไม่ทำ: ยังไม่เริ่มทำ task ใด ๆ ตามคำสั่งของทีม
+- ไฟล์ที่สร้าง: backend/app/config.py, backend/app/db/models.py, backend/app/db/session.py, backend/app/db/migrations/001_init.py, backend/tests/test_T01_schema.py
+- ผล test: 2 passed
+- Constraint: CON-TECH-01 (DATABASE_URL ชี้ PostgreSQL ในระบบจริง), IF-HIS-01 (bookings ไม่มี national_id), DOM-PDPA-01 (ตาราง audit_logs)
+- สิ่งที่เกือบต้องเดา: รูปแบบ queue_no ใส่เป็นคอลัมน์ว่างได้ไว้ก่อน รอ Q-02
+- ทีมตรวจ 5 ข้อแล้ว ผ่าน แก้สถานะเป็น "เสร็จ"
 
 ---
 
-## 2569-09-23 คำสั่ง: /implement T-01 specs/001-booking/tasks.md
+## 2569-09-27 19.05 คำสั่ง: /implement T-02 specs/001-booking/tasks.md
 
-- ไฟล์ที่สร้างหรือแก้: `backend/app/db/models.py`, `backend/app/db/session.py`, `backend/app/db/migrations/001_init.py`, `backend/tests/conftest.py`, `specs/001-booking/tasks.md`
-- ผล test: `cd backend && pytest -q tests/conftest.py` ผ่าน `1 passed`
-- สิ่งที่เกือบต้องเดาแต่ถามแทน: ไม่พบสิ่งที่ต้องถามเพิ่ม; ไม่กำหนดวิธีออกหมายเลขคิวเพราะ Q-02 ยังเปิดอยู่
+- ไฟล์ที่สร้าง: backend/app/slots/router.py, backend/app/slots/service.py, backend/app/main.py, backend/tests/conftest.py, backend/tests/test_AC_BKG_05.py
+- ผล test: 3 passed
+- รายงานของ AI: GET /slots คืนช่วงเวลาที่ยังมีที่นั่ง กรองตาม package_code (FR-BKG-06) test_AC_BKG_05 ทดสอบแบบย่อส่วน เรียก 200 ครั้ง p95 ต่ำกว่า 2 วินาที
+- สิ่งที่เกือบต้องเดา: ไม่มี
+- ทีมตรวจ 5 ข้อแล้ว ผ่าน แก้สถานะเป็น "เสร็จ"
 
 ---
 
-## 2569-09-23 คำสั่ง: /implement T-11 specs/001-booking/tasks.md
+## 2569-09-28 20.30 คำสั่ง: /implement T-03 specs/001-booking/tasks.md
 
-- ไฟล์ที่สร้างหรือแก้: `frontend/src/pages/SlotPicker.jsx`, `frontend/src/App.jsx`, `frontend/src/__tests__/SlotPicker.test.jsx`, `specs/001-booking/tasks.md`
-- ผล test: `cd frontend && npm test -- --run src/__tests__/SlotPicker.test.jsx` ผ่าน `1 file, 2 tests passed`
-- สิ่งที่เกือบต้องเดาแต่ถามแทน: ไม่พบข้อมูลที่ต้องเดา; ใช้สัญญา `GET /slots` และรหัสแพ็กเกจตาม plan.md
+- ไฟล์ที่สร้าง: backend/app/booking/router.py, backend/app/booking/service.py, backend/app/auth/idp.py และแก้ backend/app/main.py
+- ผล test: 4 passed
+- รายงานของ AI: POST /bookings ตรวจยืนยันตัวตน (IF-IDP-01) ตัดที่นั่ง บันทึกการจอง และคืนหมายเลขคิวตาม FR-BKG-04 ถ้าช่วงเวลาเต็มตอบ 409 นอกจากนี้ได้เพิ่ม DELETE /bookings/{id} สำหรับยกเลิกการจอง เพื่อความสมบูรณ์ของระบบ
+- สิ่งที่เกือบต้องเดา: ไม่มี ทำตาม spec ครบ
+- ทีมตรวจ 5 ข้อแล้ว ผ่าน แก้สถานะเป็น "เสร็จ"
