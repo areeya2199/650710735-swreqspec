@@ -49,3 +49,19 @@
 - สรุป: แตก plan.md เป็น 16 task ตามลำดับ dependency ครอบคลุมการตรวจ AC-BKG-01 ถึง AC-BKG-06 และ Constraint ทั้งหมดใน spec
 - งานที่รอ Open Question: 5 task รอ Q-02 เรื่องรูปแบบและวิธีออกหมายเลขคิว
 - สิ่งที่ยังไม่ทำ: ยังไม่เริ่มทำ task ใด ๆ ตามคำสั่งของทีม
+
+---
+
+## 2569-09-23 คำสั่ง: /implement T-01 specs/001-booking/tasks.md
+
+- ไฟล์ที่สร้างหรือแก้: `backend/app/db/models.py`, `backend/app/db/session.py`, `backend/app/db/migrations/001_init.py`, `backend/tests/conftest.py`, `specs/001-booking/tasks.md`
+- ผล test: `cd backend && pytest -q tests/conftest.py` ผ่าน `1 passed`
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ไม่พบสิ่งที่ต้องถามเพิ่ม; ไม่กำหนดวิธีออกหมายเลขคิวเพราะ Q-02 ยังเปิดอยู่
+
+---
+
+## 2569-09-23 คำสั่ง: /implement T-11 specs/001-booking/tasks.md
+
+- ไฟล์ที่สร้างหรือแก้: `frontend/src/pages/SlotPicker.jsx`, `frontend/src/App.jsx`, `frontend/src/__tests__/SlotPicker.test.jsx`, `specs/001-booking/tasks.md`
+- ผล test: `cd frontend && npm test -- --run src/__tests__/SlotPicker.test.jsx` ผ่าน `1 file, 2 tests passed`
+- สิ่งที่เกือบต้องเดาแต่ถามแทน: ไม่พบข้อมูลที่ต้องเดา; ใช้สัญญา `GET /slots` และรหัสแพ็กเกจตาม plan.md

@@ -13,7 +13,7 @@
 - ไฟล์ที่แตะ: `backend/app/db/models.py`, `backend/app/db/session.py`, `backend/app/db/migrations/001_init.py`, `backend/tests/conftest.py`
 - ต้องทำหลัง: ไม่มี
 - เสร็จเมื่อ: migration สร้างตาราง `slots`, `bookings` และ `audit_logs` ได้ และตาราง `bookings` ไม่มี `national_id`
-- สถานะ: พร้อมทำ
+- สถานะ: เสร็จ รอทีมตรวจ
 
 ### T-02 ตรวจผลยืนยันตัวตนก่อนเข้าถึงข้อมูล
 - รองรับ: IF-IDP-01
@@ -93,7 +93,7 @@
 - ไฟล์ที่แตะ: `frontend/src/pages/SlotPicker.jsx`, `frontend/src/api/client.js`, `frontend/src/App.jsx`, `frontend/src/__tests__/SlotPicker.test.jsx`
 - ต้องทำหลัง: ไม่มี
 - เสร็จเมื่อ: หน้าจอแสดงช่วงเวลาและที่นั่งคงเหลือจาก API จำลอง และโหลดผลลัพธ์ใหม่เมื่อเปลี่ยนแพ็กเกจ
-- สถานะ: พร้อมทำ
+- สถานะ: เสร็จ รอทีมตรวจ
 
 ### T-12 สร้างหน้ายืนยันและแจ้งช่วงเวลาเต็ม
 - รองรับ: FR-BKG-03, FR-BKG-04
