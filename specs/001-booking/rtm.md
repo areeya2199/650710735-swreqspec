@@ -1,6 +1,6 @@
 # RTM: จองคิวตรวจสุขภาพ (Booking)
 อ้างอิง: spec.md SPEC-BKG-001 Draft v2 | tasks.md | test-cases.md
-สร้างด้วย /verify เมื่อ 2569-10-07 08:45 | test: 8 ผ่าน 0 ไม่ผ่าน
+สร้างด้วย /verify เมื่อ 2569-10-07 08:52 | test: 7 ผ่าน 0 ไม่ผ่าน
 
 ## 1. ตามรอยไปข้างหน้า (requirement ไป โค้ด ไป test)
 | ID | AC | task | โค้ด (ไฟล์: ฟังก์ชัน) | test (ผล) | สถานะ |
@@ -32,14 +32,13 @@
 | `backend/app/booking/router.py:BookingRequest`, `POST /bookings` | FR-BKG-04, IF-IDP-01, IF-HIS-01 | POST จองและคืน booking/slot/queue fields; authentication เป็น mock; รับ national_id ที่ไม่ได้ส่งไป HIS และใส่ค่าลง log | national_id ใน request/log ขัดกับแนวทาง IF-HIS-01; F-01, F-02 |
 | `backend/app/booking/service.py:next_queue_no` | FR-BKG-04 | กำหนดตัวอักษร A, เลข 3 หลัก และนับใหม่รายวัน ทั้งที่ Q-02 ยังไม่มีคำตอบ; ใช้ตัวอย่าง A001 เป็นกฎ | F-04 |
 | `backend/app/booking/service.py:create_booking` | FR-BKG-03, FR-BKG-04 | บันทึกและตัดที่นั่ง; ปฏิเสธเมื่อ remaining ≤ 0; ยังไม่มีทางเลือก 3 ช่วงใกล้เคียงหรือคิวแจ้งเตือน | ส่วนการจองพื้นฐานมี tests ผ่าน; FR-BKG-03 ยังรอ T-05 |
-| `backend/app/booking/router.py:DELETE /bookings/{booking_id}`, `backend/app/booking/service.py:cancel_booking` | ไม่มี — เป็น UC-02 | ไม่ตรง scope | ยกเลิกคิวอยู่ใน Out of scope อย่างชัดเจน (F-03) |
 | `backend/app/booking/router.py:logger.info` | IF-HIS-01 | ไม่ตรง | ข้อความ log บันทึก `req.national_id`; F-01 |
 | `frontend/src/api/client.js:api.getSlots`, `api.createBooking` | FR-BKG-01, FR-BKG-03, FR-BKG-04, FR-BKG-06 | wrapper เรียก slots/bookings; ยังไม่มีหน้าจอใช้ wrapper และไม่มีการตั้ง TLS ที่นี่ | หน้าจอจริงยังไม่ถูกทำ |
 | `frontend/src/App.jsx:App`, `frontend/src/main.jsx` | ไม่มี behavior ของ AC | เป็นโครงหน้า/entry point | test frontend ตรวจเพียง render ชื่อระบบ |
 | `backend/tests/test_AC_BKG_01.py:test_AC_BKG_01` | AC-BKG-01 | อ่อนเมื่อพิจารณาเดี่ยว ๆ เพราะตรวจเพียง status 201 | มี `test_TC_BKG_01_1` และ `_2` เพิ่มเติมที่ตรวจแถว booking และ remaining |
 | `backend/tests/test_AC_BKG_05.py:test_AC_BKG_05` | AC-BKG-05, NFR-PERF-01 | ตรวจ p95 ของคำขอเรียงลำดับ ไม่ได้ทดสอบ concurrency 200 คน | F-08 |
 | `backend/tests/test_T01_schema.py:test_T01_tables_created`, `test_T01_no_national_id` | CON-TECH-01, DOM-PDPA-01, IF-HIS-01 | ตรวจสร้าง schema และไม่มี national_id column เท่านั้น | ไม่ยืนยัน PostgreSQL, audit behavior, data retention, HIS หรือ national_id ใน logs |
-| `frontend/src/__tests__/setup.test.jsx:โครงหน้าจอเปิดได้` | ไม่มี AC | เป็น smoke test ของโครงหน้า ไม่ตรวจ requirement การจอง | Vitest ผ่าน 1 test |
+| `frontend/src/__tests__/setup.test.jsx:โครงหน้าจอเปิดได้` | ไม่มี AC | เป็น smoke test ของโครงหน้า ไม่ตรวจ requirement การจอง | ไม่รันรอบนี้ตามขอบเขต /verify เพราะไม่มี UI test นอกเหนือจาก setup |
 
 ## 3. ข้อค้นพบ
 ชนิด: ละเมิด Constraint / อยู่นอก Scope / เดา Q-xx / ตัวเลขไม่ตรง spec / FR ไม่มี AC / test อ่อน / ข้อกำหนดไม่มี task หรือ test
@@ -48,7 +47,6 @@
 |---|---|---|---|---|---|
 | F-01 | ละเมิด Constraint | `backend/app/booking/router.py:BookingRequest`, `POST /bookings` | IF-HIS-01 | endpoint จองรับ `national_id` ทั้งที่ไม่ใช้ค้น HIS และเขียนค่าจริงลง `logger.info`; มีโอกาสเก็บเลขบัตรใน application log แม้ schema bookings ไม่มีคอลัมน์ดังกล่าว และ endpoint lookup/HIS ยังไม่มี | |
 | F-02 | ละเมิด Constraint | `backend/app/auth/idp.py:get_verified_hn` | IF-IDP-01 | ตรวจเพียงว่า Authorization ขึ้นต้นด้วย prefix คงที่แล้วใช้ข้อความต่อท้ายเป็น HN; ไม่ได้ตรวจผลจากระบบยืนยันตัวตนตามข้อกำหนด | |
-| F-03 | อยู่นอก Scope | `backend/app/booking/router.py:DELETE /bookings/{booking_id}`, `backend/app/booking/service.py:cancel_booking` | Out of scope UC-02 | เพิ่ม endpoint และ logic ยกเลิกคิว ทั้งที่ spec ระบุยกเลิก/เลื่อนคิวเป็น Out of scope | |
 | F-04 | เดา Q-02 | `backend/app/booking/service.py:next_queue_no` | Q-02, FR-BKG-04 | เลือกรูปแบบ `A001` จากตัวอย่างในคำถามและกำหนดนับใหม่รายวันก่อนทีมตอบ Q-02; เป็นการตัดสินรูปแบบ/กติกาหมายเลขคิวแทนทีม | |
 | F-05 | ตัวเลขไม่ตรง spec | `backend/app/slots/service.py:DAYS_AHEAD` | FR-BKG-01 | กำหนดช่วงค้นหา 14 วัน แต่ FR-BKG-01 กำหนดภายใน 30 วันข้างหน้า | |
 | F-06 | FR ไม่มี AC | `specs/001-booking/spec.md:AC-BKG-05`, `backend/tests/test_AC_BKG_05.py` | FR-BKG-01 | Traceability ผูก FR-BKG-01 กับ AC-BKG-05 แต่ AC-BKG-05 ตรวจ p95 เท่านั้น ไม่ตรวจว่าระบบแสดงวัน/ช่วงเวลาว่างและจำนวนที่นั่งภายใน 30 วัน; จึงไม่มี AC ที่ตรวจ behavior ของ FR-BKG-01 | |
@@ -60,3 +58,4 @@
 ## 4. แก้แล้ว
 | F-ID | แก้อย่างไร | รู้ได้อย่างไร |
 |---|---|---|
+| F-03 | ลบ `DELETE /bookings/{booking_id}` และ `cancel_booking` ออกจาก router/service ตาม Out of scope UC-02 | ค้น `cancel_booking` และ `DELETE /bookings` ใน source ไม่พบ endpoint/ฟังก์ชันดังกล่าวแล้ว |

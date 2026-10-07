@@ -93,3 +93,23 @@
 - สิ่งที่ตรวจ: `backend/app/booking/service.py:create_booking` มีเงื่อนไข `slot.remaining <= 0` และโยน `SlotFullError` แล้ว จึงไม่ต้องแก้ service ซ้ำ
 - test: ไม่แก้ test
 - ผลทดสอบ: `cd backend && pytest -v` ผ่าน 7 tests (มี deprecation warning จาก Starlette/httpx)
+
+---
+
+## 2569-10-07 08:52 คำสั่ง: /verify specs/001-booking/
+
+- ผล test รอบนี้: backend `pytest -v` ผ่าน 7 tests, ไม่ผ่าน 0; ไม่รัน frontend เพราะมีเพียง setup smoke test ตามเงื่อนไขของ /verify
+- RTM: ปรับเวลา/จำนวนผลทดสอบใน specs/001-booking/rtm.md; คง F-ID และช่อง "ทีมตัดสิน" เดิมทั้งหมด
+- จำนวนสถานะ requirement: ครบ 0, ยังไม่ถึง 7, รอ Q 0, ช่องโหว่ 8 (รวม 15 IDs)
+- ข้อค้นพบใหม่: ไม่มี; F-01 ถึง F-10 ยังคงพบตามเดิม
+- ขอบเขต: ตรวจ spec, plan, tasks, test-cases, RTM และไฟล์ทั้งหมดใน backend/app, frontend/src, backend/tests, frontend/src/__tests__; ไม่แก้ source/test/spec/plan/tasks
+
+---
+
+## 2569-10-07 08:54 คำสั่ง: ลบโค้ดที่อยู่นอก Scope (UC-02)
+
+- สิ่งที่แก้: ลบ endpoint `DELETE /bookings/{booking_id}` จาก `backend/app/booking/router.py` และลบ `cancel_booking` จาก `backend/app/booking/service.py`
+- RTM: ย้าย F-03 จากข้อค้นพบไปหัวข้อ "แก้แล้ว" พร้อมหลักฐานว่าไม่พบ endpoint/function ใน source
+- ผลทดสอบ: `cd backend && pytest -v` ผ่าน 7 tests (มี deprecation warning จาก Starlette/httpx)
+- ตรวจยืนยัน: ค้น `cancel_booking`, `DELETE /bookings` และ `@router.delete` ใน `backend/app` แล้วไม่พบรายการ
+- ไม่แก้ test
