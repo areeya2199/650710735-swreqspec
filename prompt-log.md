@@ -113,3 +113,15 @@
 - ผลทดสอบ: `cd backend && pytest -v` ผ่าน 7 tests (มี deprecation warning จาก Starlette/httpx)
 - ตรวจยืนยัน: ค้น `cancel_booking`, `DELETE /bookings` และ `@router.delete` ใน `backend/app` แล้วไม่พบรายการ
 - ไม่แก้ test
+
+---
+
+## 2569-10-07 08:56 คำสั่ง: แก้ตามข้อค้นพบใน specs/001-booking/rtm.md
+
+- ขอบเขต: แก้เฉพาะ F-01, F-04, F-05 ตามที่ทีมเลือก; ไม่แก้ test โดยเฉพาะ test ที่ชื่อขึ้นต้น `test_TC_`
+- F-01: เอา `national_id` ออกจาก request model และ log; การค้น HN จาก HIS ยังรอ T-09
+- F-04: เอาการสร้างเลขคิวแบบเดาออก; `queue_no` เป็น null ระหว่างรอคำตอบ Q-02
+- F-05: เปลี่ยนช่วงค้นหาจาก 14 เป็น 30 วันตาม FR-BKG-01
+- RTM: ย้าย F-01, F-04, F-05 ไปหัวข้อ "แก้แล้ว" พร้อมหลักฐาน; F-02 และ F-06 ถึง F-10 ยังคงเป็นข้อค้นพบ
+- ผลทดสอบ: `cd backend && pytest -v` ผ่าน 7 tests (มี deprecation warning จาก Starlette/httpx)
+- ตรวจ syntax: ไม่พบข้อผิดพลาดใน router.py, booking/service.py และ slots/service.py
