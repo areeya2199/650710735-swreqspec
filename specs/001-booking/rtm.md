@@ -1,6 +1,6 @@
 # RTM: จองคิวตรวจสุขภาพ (Booking)
 อ้างอิง: spec.md SPEC-BKG-001 Draft v2 | tasks.md | test-cases.md
-สร้างด้วย /verify เมื่อ 2569-10-07 08:52 | test: 7 ผ่าน 0 ไม่ผ่าน
+สร้างด้วย /verify เมื่อ 2569-10-07 09:00 | test: 7 ผ่าน 0 ไม่ผ่าน
 
 ## 1. ตามรอยไปข้างหน้า (requirement ไป โค้ด ไป test)
 | ID | AC | task | โค้ด (ไฟล์: ฟังก์ชัน) | test (ผล) | สถานะ |
@@ -28,11 +28,10 @@
 | `backend/app/db/migrations/001_init.py:upgrade`; `backend/app/db/models.py:Slot`, `Booking`, `AuditLog` | FR-BKG-01, FR-BKG-02, FR-BKG-04, FR-BKG-06, IF-HIS-01, DOM-PDPA-01 | ตารางมี fields พื้นฐาน; `Booking` เก็บ HN และไม่มี national_id; ยังไม่มีการบังคับกฎจองซ้ำหรืออายุเก็บ audit log | schema test ตรวจการสร้างตารางและไม่มี national_id column |
 | `backend/app/auth/idp.py:get_verified_hn` | IF-IDP-01 | ไม่ตรงระบบจริง: เชื่อ prefix ใน Authorization แทนการรับผลยืนยันจาก IDP | F-02 |
 | `backend/app/slots/router.py:GET /slots` | FR-BKG-01, FR-BKG-06 | ส่งรายการวัน เวลา และ remaining รวมทั้งรับ package_code; ไม่มีหน้าจอแสดงข้อมูล | ข้อมูลช่วงเวลา/จำนวนวันถูกกำหนดใน service |
-| `backend/app/slots/service.py:list_available_slots` | FR-BKG-01, FR-BKG-06 | กรอง package และ remaining แต่จำกัดช่วงค้นหา 14 วัน ไม่ใช่ 30 วัน | F-05; ไม่มี AC ที่ตรวจ behavior ของ FR-BKG-01/06 อย่างครบถ้วน (F-06, F-07) |
+| `backend/app/slots/service.py:list_available_slots` | FR-BKG-01, FR-BKG-06 | กรอง package และ remaining ในช่วง 30 วัน | ไม่มี AC ที่ตรวจ behavior ของ FR-BKG-01/06 อย่างครบถ้วน (F-06, F-07) |
 | `backend/app/booking/router.py:BookingRequest`, `POST /bookings` | FR-BKG-04, IF-IDP-01 | POST รับ slot_id และคืน booking/slot/queue fields; authentication เป็น mock | ไม่มีฟิลด์ national_id ใน request หรือ logger แล้ว; IDP จริงยังไม่เชื่อม (F-02) |
 | `backend/app/booking/service.py:create_booking` | FR-BKG-04, Q-02 | บันทึกและตัดที่นั่ง; เว้น queue_no เป็น null จนได้ข้อสรุป Q-02 | ไม่สร้าง format/sequence ของหมายเลขคิว |
 | `backend/app/booking/service.py:create_booking` | FR-BKG-03, FR-BKG-04 | บันทึกและตัดที่นั่ง; ปฏิเสธเมื่อ remaining ≤ 0; ยังไม่มีทางเลือก 3 ช่วงใกล้เคียงหรือคิวแจ้งเตือน | ส่วนการจองพื้นฐานมี tests ผ่าน; FR-BKG-03 ยังรอ T-05 |
-| `backend/app/booking/router.py:logger.info` | IF-HIS-01 | ไม่ตรง | ข้อความ log บันทึก `req.national_id`; F-01 |
 | `frontend/src/api/client.js:api.getSlots`, `api.createBooking` | FR-BKG-01, FR-BKG-03, FR-BKG-04, FR-BKG-06 | wrapper เรียก slots/bookings; ยังไม่มีหน้าจอใช้ wrapper และไม่มีการตั้ง TLS ที่นี่ | หน้าจอจริงยังไม่ถูกทำ |
 | `frontend/src/App.jsx:App`, `frontend/src/main.jsx` | ไม่มี behavior ของ AC | เป็นโครงหน้า/entry point | test frontend ตรวจเพียง render ชื่อระบบ |
 | `backend/tests/test_AC_BKG_01.py:test_AC_BKG_01` | AC-BKG-01 | อ่อนเมื่อพิจารณาเดี่ยว ๆ เพราะตรวจเพียง status 201 | มี `test_TC_BKG_01_1` และ `_2` เพิ่มเติมที่ตรวจแถว booking และ remaining |
